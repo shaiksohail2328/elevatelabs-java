@@ -1,0 +1,287 @@
+import java.util.*;
+
+/**
+ * Single-file Library Management System (console-based)
+ * - Paste into LibraryManagementSystem.java
+ * - Compile: javac LibraryManagementSystem.java
+ * - Run: java LibraryManagementSystem
+ *
+ * Features:
+ * 1. Add / Remove books
+ * 2. Register users
+ * 3. Issue book to user
+ * 4. Return book
+ * 5. View all books / users / issued books
+ * 6. Simple validation and friendly messages
+ */
+
+// Simple Book class
+class Book {
+    private static int nextId = 1;
+    private final int id;
+    private String title;
+    private String author;
+    private boolean isIssued;
+
+    public Book(String title, String author) {
+        this.id = nextId++;
+        this.title = title;
+        this.author = author;
+        this.isIssued = false;
+    }
+
+    public int getId() { return id; }
+    public String getTitle() { return title; }
+    public String getAuthor() { return author; }
+    public boolean isIssued() { return isIssued; }
+
+    public void setTitle(String title) { this.title = title; }
+    public void setAuthor(String author) { this.author = author; }
+    public void setIssued(boolean issued) { isIssued = issued; }
+
+    @Override
+    public String toString() {
+        return String.format("Book[id=%d, title=\"%s\", author=\"%s\", issued=%s]",
+                id, title, author, isIssued ? "YES" : "NO");
+    }
+}
+
+// Simple User class
+class User {
+    private static int nextId = 1;
+    private final int id;
+    private String name;
+    private List<Integer> issuedBookIds;
+
+    public User(String name) {
+        this.id = nextId++;
+        this.name = name;
+        this.issuedBookIds = new ArrayList<>();
+    }
+
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public List<Integer> getIssuedBookIds() { return issuedBookIds; }
+
+    public void setName(String name) { this.name = name; }
+
+    public void issueBook(int bookId) {
+        issuedBookIds.add(bookId);
+    }
+
+    public boolean returnBook(int bookId) {
+        return issuedBookIds.remove((Integer) bookId);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("User[id=%d, name=\"%s\", booksIssued=%d]",
+                id, name, issuedBookIds.size());
+    }
+}
+
+// Library class - manages books and users
+class Library {
+    private Map<Integer, Book> books = new LinkedHashMap<>();
+    private Map<Integer, User> users = new LinkedHashMap<>();
+
+    // Add a book
+    public Book addBook(String title, String author) {
+        Book b = new Book(title, author);
+        books.put(b.getId(), b);
+        return b;
+    }
+
+    // Remove a book (only if not issued)
+    public boolean removeBook(int bookId) {
+        Book b = books.get(bookId);
+        if (b == null) return false;
+        if (b.isIssued()) return false; // cannot remove issued books
+        books.remove(bookId);
+        return true;
+    }
+
+    // Register user
+    public User registerUser(String name) {
+        User u = new User(name);
+        users.put(u.getId(), u);
+        return u;
+    }
+
+    // Issue book to user
+    public String issueBook(int userId, int bookId) {
+        User u = users.get(userId);
+        Book b = books.get(bookId);
+        if (u == null) return "User not found.";
+        if (b == null) return "Book not found.";
+        if (b.isIssued()) return "Book is already issued.";
+        // Issue
+        b.setIssued(true);
+        u.issueBook(bookId);
+        return "Book issued successfully.";
+    }
+
+    // Return book from user
+    public String returnBook(int userId, int bookId) {
+        User u = users.get(userId);
+        Book b = books.get(bookId);
+        if (u == null) return "User not found.";
+        if (b == null) return "Book not found.";
+        boolean removed = u.returnBook(bookId);
+        if (!removed) return "This user did not have that book.";
+        b.setIssued(false);
+        return "Book returned successfully.";
+    }
+
+    public Collection<Book> listBooks() { return books.values(); }
+    public Collection<User> listUsers() { return users.values(); }
+
+    public Book getBook(int id) { return books.get(id); }
+    public User getUser(int id) { return users.get(id); }
+
+    // List issued books with owner info
+    public List<String> listIssuedBooks() {
+        List<String> out = new ArrayList<>();
+        for (User u : users.values()) {
+            for (int bookId : u.getIssuedBookIds()) {
+                Book b = books.get(bookId);
+                if (b != null) {
+                    out.add(String.format("Book[id=%d,title=\"%s\"] -> User[id=%d,name=\"%s\"]",
+                            b.getId(), b.getTitle(), u.getId(), u.getName()));
+                }
+            }
+        }
+        return out;
+    }
+}
+
+// Main program with menu
+public class LibraryManagementSystem {
+    private static Scanner sc = new Scanner(System.in);
+    private static Library library = new Library();
+
+    public static void main(String[] args) {
+        seedSampleData(); // optional sample data
+        System.out.println("==== Welcome to Simple Library Management System ====");
+        boolean exit = false;
+        while (!exit) {
+            printMenu();
+            int choice = readInt("Enter choice: ");
+            System.out.println();
+            switch (choice) {
+                case 1: handleAddBook(); break;
+                case 2: handleRemoveBook(); break;
+                case 3: handleRegisterUser(); break;
+                case 4: handleIssueBook(); break;
+                case 5: handleReturnBook(); break;
+                case 6: handleListBooks(); break;
+                case 7: handleListUsers(); break;
+                case 8: handleListIssuedBooks(); break;
+                case 9: exit = true; System.out.println("Exiting... Goodbye!"); break;
+                default: System.out.println("Invalid choice. Try again."); break;
+            }
+            System.out.println();
+        }
+        sc.close();
+    }
+
+    private static void printMenu() {
+        System.out.println("1. Add Book");
+        System.out.println("2. Remove Book");
+        System.out.println("3. Register User");
+        System.out.println("4. Issue Book");
+        System.out.println("5. Return Book");
+        System.out.println("6. List All Books");
+        System.out.println("7. List All Users");
+        System.out.println("8. List Issued Books");
+        System.out.println("9. Exit");
+    }
+
+    private static void handleAddBook() {
+        System.out.println("--- Add Book ---");
+        String title = readLine("Title: ");
+        String author = readLine("Author: ");
+        Book b = library.addBook(title, author);
+        System.out.println("Added: " + b);
+    }
+
+    private static void handleRemoveBook() {
+        System.out.println("--- Remove Book ---");
+        int id = readInt("Book ID to remove: ");
+        boolean ok = library.removeBook(id);
+        if (ok) System.out.println("Book removed.");
+        else System.out.println("Could not remove book. It may not exist or is currently issued.");
+    }
+
+    private static void handleRegisterUser() {
+        System.out.println("--- Register User ---");
+        String name = readLine("User name: ");
+        User u = library.registerUser(name);
+        System.out.println("Registered: " + u);
+    }
+
+    private static void handleIssueBook() {
+        System.out.println("--- Issue Book ---");
+        int userId = readInt("User ID: ");
+        int bookId = readInt("Book ID: ");
+        String result = library.issueBook(userId, bookId);
+        System.out.println(result);
+    }
+
+    private static void handleReturnBook() {
+        System.out.println("--- Return Book ---");
+        int userId = readInt("User ID: ");
+        int bookId = readInt("Book ID: ");
+        String result = library.returnBook(userId, bookId);
+        System.out.println(result);
+    }
+
+    private static void handleListBooks() {
+        System.out.println("--- All Books ---");
+        Collection<Book> books = library.listBooks();
+        if (books.isEmpty()) System.out.println("No books in library.");
+        else for (Book b : books) System.out.println(b);
+    }
+
+    private static void handleListUsers() {
+        System.out.println("--- All Users ---");
+        Collection<User> users = library.listUsers();
+        if (users.isEmpty()) System.out.println("No users registered.");
+        else for (User u : users) System.out.println(u + " -> Issued Book IDs: " + u.getIssuedBookIds());
+    }
+
+    private static void handleListIssuedBooks() {
+        System.out.println("--- Issued Books ---");
+        List<String> issued = library.listIssuedBooks();
+        if (issued.isEmpty()) System.out.println("No books are currently issued.");
+        else for (String s : issued) System.out.println(s);
+    }
+
+    // Utility: read an integer with message
+    private static int readInt(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String line = sc.nextLine().trim();
+            try {
+                return Integer.parseInt(line);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+    }
+
+    // Utility: read a line (non-empty)
+    private static String readLine(String prompt) {
+        System.out.print(prompt);
+        return sc.nextLine().trim();
+    }
+
+    // Optional: seed some sample books and users to play with
+    private static void seedSampleData() {
+        library.addBook("The Alchemist", "Paulo Coelho");
+        library.addBook("Clean Code", "Robert C. Martin");
+        library.addBook("Introduction to Algorithms", "Cormen, Leiserson, Rivest, Stein");
+        library.registerUser("Srinidhi");
+        library.registerUser("Rahul");
+    }
+}
