@@ -1,0 +1,63 @@
+import java.io.*;
+import java.util.Scanner;
+
+public class NotesApp {
+    private static final String FILE_NAME = "notes.txt";
+
+    // Method to write a note to the file
+    public static void writeNote() {
+        try (Scanner sc = new Scanner(System.in);
+             FileWriter fw = new FileWriter(FILE_NAME, true)) { // append = true
+            System.out.println("Enter your note (type 'exit' to stop): ");
+            while (true) {
+                String note = sc.nextLine();
+                if (note.equalsIgnoreCase("exit")) {
+                    break;
+                }
+                fw.write(note + System.lineSeparator());
+            }
+            System.out.println("Notes saved successfully!");
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
+    // Method to read notes from the file
+    public static void readNotes() {
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_NAME))) {
+            String line;
+            System.out.println("\nYour Notes:");
+            while ((line = br.readLine()) != null) {
+                System.out.println("- " + line);
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("No notes found. Start by writing some!");
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    // Main menu
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        while (true) {
+            System.out.println("\n--- Notes App ---");
+            System.out.println("1. Write Note");
+            System.out.println("2. Read Notes");
+            System.out.println("3. Exit");
+            System.out.print("Choose an option: ");
+            int choice = sc.nextInt();
+            sc.nextLine(); // consume leftover newline
+
+            switch (choice) {
+                case 1 -> writeNote();
+                case 2 -> readNotes();
+                case 3 -> {
+                    System.out.println("Goodbye!");
+                    return;
+                }
+                default -> System.out.println("Invalid choice. Try again!");
+            }
+        }
+    }
+}
