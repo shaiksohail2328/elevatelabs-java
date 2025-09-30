@@ -1,0 +1,68 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class ToDoApp {
+    public static void main(String[] args) {
+        // Main frame
+        JFrame frame = new JFrame("To-Do List App");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 400);
+        frame.setLayout(new BorderLayout());
+
+        // Task list model + JList
+        DefaultListModel<String> taskListModel = new DefaultListModel<>();
+        JList<String> taskList = new JList<>(taskListModel);
+        JScrollPane scrollPane = new JScrollPane(taskList);
+
+        // Input field
+        JTextField taskField = new JTextField();
+
+        // Buttons
+        JButton addButton = new JButton("Add Task");
+        JButton deleteButton = new JButton("Delete Task");
+
+        // Panel for input + buttons
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BorderLayout());
+        inputPanel.add(taskField, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridLayout(1, 2));
+        buttonPanel.add(addButton);
+        buttonPanel.add(deleteButton);
+
+        inputPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add components to frame
+        frame.add(scrollPane, BorderLayout.CENTER);
+        frame.add(inputPanel, BorderLayout.SOUTH);
+
+        // Add task action
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String task = taskField.getText().trim();
+                if (!task.isEmpty()) {
+                    taskListModel.addElement(task);
+                    taskField.setText("");
+                }
+            }
+        });
+
+        // Delete task action
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = taskList.getSelectedIndex();
+                if (selectedIndex != -1) {
+                    taskListModel.remove(selectedIndex);
+                }
+            }
+        });
+
+        // Show window
+        frame.setVisible(true);
+    }
+}
